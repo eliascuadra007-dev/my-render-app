@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Flask Site</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        a {
+            color: #4af;
+            text-decoration: none;
+            font-size: 1.2rem;
+            margin-top: 1rem;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello, {{ name }}!</h1>
+    <p>Welcome to my Flask site.</p>
+
+    <a href="/game">▶ Play the Mini Game</a>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodge the Blocks</title>
+    <style>
+        body {
+            background: #050509;
+            color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            height: 100vh;
+        }
+        canvas {
+            background: #111827;
+            border: 2px solid #4b5563;
+        }
+        .info {
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="game" width="480" height="360"></canvas>
+    <div class="info">
+        <p>Move with ⬅ ➡ arrows. Avoid the red blocks.</p>
+        <p>Press SPACE to restart after game over.</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+
+        const player = {
+            x: canvas.width / 2 - 15,
+            y: canvas.height - 40,
+            w: 30,
+            h: 30,
+            speed: 5,
+            vx: 0
+        };
+
+        const blocks = [];
+        let lastSpawn = 0;
+        const spawnInterval = 900; // ms
+        let score = 0;
+        let gameOver = false;
+        let lastTime = 0;
+
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false
+        };
+
+        function spawnBlock() {
+            const w = 20 + Math.random() * 40;
+            const x = Math.random() * (canvas.width - w);
+            const speed = 1.5 + Math.random() * 2.5;
+            blocks.push({
+                x,
+                y: -30,
+                w,
+                h: 20,
+                vy: speed
+            });
+        }
+
+        function rectsOverlap(a, b) {
+            return !(
+                a.x + a.w < b.x ||
+                a.x > b.x + b.w ||
+                a.y + a.h < b.y ||
+                a.y > b.y + b.h
+            );
+        }
+
+        function resetGame() {
+            blocks.length = 0;
+            score = 0;
+            gameOver = false;
+            player.x = canvas.width / 2 - player.w / 2;
+            lastSpawn = 0;
+            lastTime = 0;
+        }
+
+        function update(dt) {
+            if (gameOver) return;
+
+            // Move player
+            player.vx = 0;
+            if (keys.ArrowLeft) player.vx = -player.speed;
+            if (keys.ArrowRight) player.vx = player.speed;
+
+            player.x += player.vx;
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.w > canvas.width) {
+                player.x = canvas.width - player.w;
+            }
+
+            // Spawn blocks
+            if (lastTime - lastSpawn > spawnInterval) {
+                spawnBlock();
+                lastSpawn = lastTime;
+            }
+
+            // Update blocks
+            for (let i = blocks.length - 1; i >= 0; i--) {
+                const b = blocks[i];
+                b.y += b.vy;
+
+                // Collision check
+                if (rectsOverlap(player, b)) {
+                    gameOver = true;
+                }
+
+                // Remove off-screen blocks
+                if (b.y > canvas.height + 50) {
+                    blocks.splice(i, 1);
+                }
+            }
+
+            // Score goes up over time
+            score += dt * 0.01;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Player
+            ctx.fillStyle = "#3b82f6";
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+
+            // Blocks
+            ctx.fillStyle = "#ef4444";
+            for (const b of blocks) {
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+            }
+
+            // Score
+            ctx.fillStyle = "#e5e7eb";
+            ctx.font = "16px Arial";
+            ctx.fillText("Score: " + Math.floor(score), 10, 20);
+
+            if (gameOver) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "#f9fafb";
+                ctx.font = "24px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 10);
+                ctx.font = "16px Arial";
+                ctx.fillText("Press SPACE to restart", canvas.width / 2, canvas.height / 2 + 20);
+                ctx.textAlign = "start";
+            }
+        }
+
+        function loop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const dt = timestamp - lastTime;
+            lastTime = timestamp;
+
+            update(dt);
+            draw();
+
+            requestAnimationFrame(loop);
+        }
+
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+                keys[e.code] = true;
+            }
+            if (e.code === "Space" && gameOver) {
+                resetGame();
+            }
+        });
+
+        window.addEventListener("keyup", (e) => {
+            if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+                keys[e.code] = false;
+            }
+        });
+
+        resetGame();
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>
